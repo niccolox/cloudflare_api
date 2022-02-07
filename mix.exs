@@ -10,6 +10,7 @@ defmodule CloudflareApi.MixProject do
       version: @version,
       elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,
+      description: "A set of convenience functions around the Cloudflare Client API",
       package: package(),
       deps: deps(),
       docs: docs()
