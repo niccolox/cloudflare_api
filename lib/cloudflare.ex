@@ -1,27 +1,11 @@
 defmodule CloudflareApi do
-  @moduledoc """
-  Documentation for `CloudflareApi`.
-  """
-
+  #use Tesla, only: [:get], docs: false
   use Tesla
-
-  alias CloudflareApi.CloudflareARecord
 
   plug Tesla.Middleware.BaseUrl, "https://api.cloudflare.com/client/v4"
   plug Tesla.Middleware.JSON
   plug Tesla.Middleware.BearerAuth, token: "token"
 
-  @doc ~S"""
-  Get a preconfigured client you can pass in to other functions
-
-  This makes it so that you don't have to provide the `cloudflare_api_token`
-  to every function call.
-
-  ## Examples:
-
-    iex> CloudflareApi.new("<your_token">)
-
-  """
   def new(cloudflare_api_token) do
     Tesla.client [
       {Tesla.Middleware.BaseUrl, "https://api.cloudflare.com/client/v4"},
@@ -30,27 +14,6 @@ defmodule CloudflareApi do
     ]
   end
 
-  @doc ~S"""
-  Returns a function that you can use to easily pass clients in your code.
-
-  This makes it so you don't have to create your own client for every
-  function call.  If you are going to make multiple calls then this is
-  recommended for convenience and simplicity.  For example:
-
-  ```
-  # Get a function that wraps your token for you
-  client = CloudflareApi.client("<my_token>")
-
-  # Now you can call other functions like this:
-  CloudflareApi.DnsRecords.list(client(), "my_zone_id)
-
-  # If you are going to do additional processing, you can use a pipe:
-  client()
-  |> CloudflareApi.list("my_zone_id")
-  |> Enum.map(fn record -> {record} end)
-  ```
-
-  """
   def client(cloudflare_api_token) do
     c = CloudflareApi.new(cloudflare_api_token)
     fn -> c end
@@ -84,10 +47,6 @@ defmodule CloudflareApi do
       end
     end
 
-    def create(client, zone_id, %CloudflareARecord{} = record) do
-      post(client, "/zones/#{zone_id}/dns_records", CloudflareARecord.to_cf_json(record))
-    end
-
     def create(client, zone_id, hostname, ip, type \\ "A") do
       post(client, "/zones/#{zone_id}/dns_records", %{
         type: type,
@@ -114,11 +73,11 @@ end
 # |> get("https://example.con/api/v1/hello?name=bob")
 
 
-# cf = CloudflareApi.client(token)
-# ClouflareApi.list_dns_records(cf)
-#
-#
-# CloudflareApi.client(token)
-# |> ClouflareApi.DnsRecords.list()
-# |> Enum.map(fn a -> a end)
+cf = CloudflareApi.client(token)
+ClouflareApi.list_dns_records(cf)
+
+
+CloudflareApi.client(token)
+|> ClouflareApi.DnsRecords.list()
+|> Enum.map(fn a -> a end)
 
