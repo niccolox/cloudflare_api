@@ -1,12 +1,12 @@
 defmodule DomainNameOperator.CloudflareOps do
-    # %CloudflareARecord{
-    #   zone: zone_id,
-    #   hostname: hostname,
-    #   #ip: List.first(service.status.loadBalancer.ingress).ip
-    #   ip: ip
-    # }
+  # %CloudflareARecord{
+  #   zone: zone_id,
+  #   hostname: hostname,
+  #   #ip: List.first(service.status.loadBalancer.ingress).ip
+  #   ip: ip
+  # }
   def record_present?(record) do
-    relevant_a_records
+    # relevant_a_records()
   end
 
   def get_a_records do
@@ -22,10 +22,8 @@ defmodule DomainNameOperator.CloudflareOps do
   end
 
   def create_a_record(ip) do
-
   end
 
   def remove_a_record(ip) do
-
   end
 end
