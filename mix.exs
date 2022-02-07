@@ -35,9 +35,19 @@ defmodule CloudflareApi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:ex_doc, "~> 0.28.0"},
       {:bonny, "~> 0.4"},
       {:tesla, "~> 1.4"},
       {:hackney, "~> 1.17"}
+    ]
+  end
+
+  defp docs do
+    [
+      main: "CloudflareApi",
+      source_url: @source_url,
+      extra_section: [],
+      api_reference: false
     ]
   end
 end
