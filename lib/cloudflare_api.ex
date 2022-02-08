@@ -40,11 +40,6 @@ defmodule CloudflareApi do
 
   """
 
-  alias CloudflareApi.DnsRecord
-  alias CloudflareApi.Zone
-
-  use Tesla
-
   @doc ~S"""
   Get a preconfigured client you can pass in to other functions
 
@@ -94,9 +89,6 @@ defmodule CloudflareApi do
   def uri_encode_opts(opts) do
     URI.encode_query(opts, :rfc3986)
   end
-
-  defp c(%Tesla.Client{} = client), do: client
-  defp c(client), do: client.()
 end
 
 # HTTP
