@@ -1,5 +1,10 @@
 defmodule CloudflareApi do
   @moduledoc """
+
+  _NOTE:  This package is still under active development and may be refactored
+  in substantive ways very soon.  If you need to get to prod soon, you may
+  want to find an alternative._
+
   `CloudflareApi` is a thin wrapper around the Cloudflare API.  It provides
   convenient functions and elixir idioms so you don't have to use HTTP directly.
 
