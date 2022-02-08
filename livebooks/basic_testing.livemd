@@ -1,0 +1,223 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# CloudflareApi Walk-through Usage
+
+## Instantiate Client that we can reuse
+
+If you don't already have a CloudFlare token, you can [create one using these instructions](https://developers.cloudflare.com/api/tokens/create).
+
+```elixir
+c = CloudflareApi.client("<your_cloudflare_token")
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+#Function<0.122169942/0 in CloudflareApi.client/1>
+```
+
+## List Cloudflare Zones
+
+We're going to assume here that the first zone in the list is the one we want
+
+```elixir
+{:ok, results} = CloudflareApi.Zones.list(c)
+zone_id = List.first(results)["id"]
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+"1576e86130161d3809f2e5248e8d9e08"
+```
+
+Get the zone ID from above.  example:
+
+```1a76e8a13016ad3809f2a5248ead9ea8```
+
+## List DNS Records for Zone
+
+```elixir
+{:ok, results} = CloudflareApi.DnsRecords.list(c, zone_id)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok,
+ [
+   %CloudflareApi.DnsRecord{
+     created_on: "2021-12-23T02:25:00.262565Z",
+     hostname: "d2delectabledesigns.com",
+     id: "f4a34e55fc5ab32ae99c4aeedebbcd16",
+     ip: "64.98.145.30",
+     locked: false,
+     proxiable: true,
+     proxied: true,
+     ttl: 1,
+     type: "A",
+     zone_id: "1576e86130161d3809f2e5248e8d9e08",
+     zone_name: "d2delectabledesigns.com"
+   },
+   %CloudflareApi.DnsRecord{
+     created_on: "2021-12-23T02:25:00.257129Z",
+     hostname: "www.d2delectabledesigns.com",
+     id: "fb3adbdb265bc4033b59352caba32184",
+     ip: "64.98.145.30",
+     locked: false,
+     proxiable: true,
+     proxied: true,
+     ttl: 1,
+     type: "A",
+     zone_id: "1576e86130161d3809f2e5248e8d9e08",
+     zone_name: "d2delectabledesigns.com"
+   },
+   %CloudflareApi.DnsRecord{
+     created_on: "2021-12-23T02:25:00.277994Z",
+     hostname: "d2delectabledesigns.com",
+     id: "f11b9ce25cfae117594f123622b53cc4",
+     ip: "mx1.forwardemail.net",
+     locked: false,
+     proxiable: false,
+     proxied: false,
+     ttl: 1,
+     type: "MX",
+     zone_id: "1576e86130161d3809f2e5248e8d9e08",
+     zone_name: "d2delectabledesigns.com"
+   },
+   %CloudflareApi.DnsRecord{
+     created_on: "2021-12-23T02:25:00.273706Z",
+     hostname: "d2delectabledesigns.com",
+     id: "2d8c378db11697739f49dd7e5477d9b4",
+     ip: "mx2.forwardemail.net",
+     locked: false,
+     proxiable: false,
+     proxied: false,
+     ttl: 1,
+     type: "MX",
+     zone_id: "1576e86130161d3809f2e5248e8d9e08",
+     zone_name: "d2delectabledesigns.com"
+   },
+   %CloudflareApi.DnsRecord{
+     created_on: "2021-12-23T02:25:00.249982Z",
+     hostname: "d2delectabledesigns.com",
+     id: "38fb8baa25d638798ffeffc677e06a80",
+     ip: "forward-email-site-verification=UYiVxws61l",
+     locked: false,
+     proxiable: false,
+     proxied: false,
+     ttl: 1,
+     type: "TXT",
+     zone_id: "1576e86130161d3809f2e5248e8d9e08",
+     zone_name: "d2delectabledesigns.com"
+   },
+   %CloudflareApi.DnsRecord{
+     created_on: "2021-12-23T02:25:00.244756Z",
+     hostname: "d2delectabledesigns.com",
+     id: "fded0c3d20558b43d3f89a716dcb7468",
+     ip: "v=spf1 a mx include:spf.forwardemail.net include:_spf.google.com -all",
+     locked: false,
+     proxiable: false,
+     proxied: false,
+     ttl: 1,
+     type: "TXT",
+     zone_id: "1576e86130161d3809f2e5248e8d9e08",
+     zone_name: "d2delectabledesigns.com"
+   }
+ ]}
+```
+
+## Create a new record
+
+This may fail if the record already exists
+
+```elixir
+{:ok, abcde_record} = CloudflareApi.DnsRecords.create(c, zone_id, "abcde", "143.143.12.69")
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok,
+ %CloudflareApi.DnsRecord{
+   created_on: "2022-02-08T00:31:08.699689Z",
+   hostname: "abcde.d2delectabledesigns.com",
+   id: "2242cfd05227fe11e9aa7c4341b691f2",
+   ip: "143.143.12.69",
+   locked: false,
+   proxiable: true,
+   proxied: false,
+   ttl: 1,
+   type: "A",
+   zone_id: "1576e86130161d3809f2e5248e8d9e08",
+   zone_name: "d2delectabledesigns.com"
+ }}
+```
+
+## List records for hostname
+
+This retrieves the record created above using the hostname
+
+```elixir
+{:ok, [%CloudflareApi.DnsRecord{} = abcde_record]} =
+  CloudflareApi.DnsRecords.list_for_hostname(c, zone_id, abcde_record.hostname)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok,
+ [
+   %CloudflareApi.DnsRecord{
+     created_on: "2022-02-08T00:31:08.699689Z",
+     hostname: "abcde.d2delectabledesigns.com",
+     id: "2242cfd05227fe11e9aa7c4341b691f2",
+     ip: "143.143.12.69",
+     locked: false,
+     proxiable: true,
+     proxied: false,
+     ttl: 1,
+     type: "A",
+     zone_id: "1576e86130161d3809f2e5248e8d9e08",
+     zone_name: "d2delectabledesigns.com"
+   }
+ ]}
+```
+
+## Check if record for hostname exists
+
+```elixir
+CloudflareApi.DnsRecords.hostname_exists?(c, zone_id, abcde_record.hostname)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+true
+```
+
+## Delete a record
+
+This deletes the record created above
+
+```elixir
+CloudflareApi.DnsRecords.delete(c, zone_id, abcde_record.id)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok, "2242cfd05227fe11e9aa7c4341b691f2"}
+```
+
+## Check if record for hostname exists
+
+```elixir
+CloudflareApi.DnsRecords.hostname_exists?(c, zone_id, abcde_record.hostname)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+false
+```
