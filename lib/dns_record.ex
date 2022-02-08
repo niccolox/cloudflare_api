@@ -1,11 +1,15 @@
 defmodule CloudflareApi.DnsRecord do
   @moduledoc ~S"""
+  Makes a struct and convenience functions around A Cloudflare DNS record.
+
+  See Cloudflare docs:  https://api.cloudflare.com/#dns-records-for-a-zone-properties
   """
 
   alias CloudflareApi.Utils
 
   @enforce_keys [:zone_id, :hostname, :ip]
   defstruct [
+    :id,
     :zone_id,
     :zone_name,
     :hostname,
@@ -40,6 +44,7 @@ defmodule CloudflareApi.DnsRecord do
 
   def from_cf_json(record) do
     %CloudflareApi.DnsRecord{
+      id: record["id"],
       zone_id: record["zone_id"],
       zone_name: record["zone_name"],
       hostname: record["name"],

@@ -1,9 +1,47 @@
 defmodule CloudflareApi do
   @moduledoc """
-  Documentation for `CloudflareApi`.
+  `CloudflareApi` is a thin wrapper around the Cloudflare API.  It provides
+  convenient functions and elixir idioms so you don't have to use HTTP directly.
+
+  This library subscribes to the philosophy that you a well-designed REST API
+  doesn't need
+  a heavy layer of abstraction on top.  There is extensive documentation for
+  the CloudFlare API already, and abstracting that away .  The downside of
+  course is that if you _want_ to be shielded from the API details, this isn't
+  the package for you.
+
+  For example, if you wanted to call
+  [the Cloudflare endpoint for listing DNS records](https://api.cloudflare.com/#dns-records-for-a-zone-list-dns-records):
+
+  ```
+  GET zones/:zone_identifier/dns_records
+  ```
+
+  rather than using one of the many HTTP clients, you can do:
+
+  ```
+  CloudflareApi.DnsRecords.list(client, zone_id)
+  ```
+
+  The extensive query string prameters options that CloudFlare offers are
+  also accessible through an `opts` `KeywordList`:
+
+  ```
+  CloudflareApi.DnsRecords.list(client, zone_id, name: hostname, type: "A")
+  ```
+
+  You may wish to look through the Livebook for an example of usage.
+
+  _NOTE:  This package is still very new and is far from feature complete.  The
+  most common endpoints will be created first, but if you need one that isn't
+  provided yet you can open an issue on Github (or send a pull request).
+  Because this layer is very thin, it doesn't usually take long to add new
+  endpoints._
+
   """
 
   alias CloudflareApi.DnsRecord
+  alias CloudflareApi.Zone
 
   use Tesla
 
@@ -57,88 +95,8 @@ defmodule CloudflareApi do
     URI.encode_query(opts, :rfc3986)
   end
 
-  # @doc false
-  # def opts_to_query_str(opts) do
-  #  opts
-  #  |> Enum.map(fn {k, v} -> {url_encode(k), url_encode(v)} end)
-  #  |> Enum.map(fn {k, v} -> "#{k}=#{v}" end)
-  # end
-
   defp c(%Tesla.Client{} = client), do: client
   defp c(client), do: client.()
-
-  defmodule DnsRecords do
-    def list(client, zone_id, opts \\ nil) do
-      # TODO validate zone and raise exception if invalid
-      # with {:ok, env} <- Tesla.get(c(client), list_url(zone_id, opts)) do
-      #  case env.body do
-      #    %{"success" => false} -> {:err, env.body["errors"]}
-      #    body -> {:ok, body}
-      #  end
-      # end
-      case Tesla.get(c(client), list_url(zone_id, opts)) do
-        {:ok, %Tesla.Env{status: 200, body: body}} -> {:ok, to_structs(body["result"])}
-        {:ok, %Tesla.Env{body: %{"errors" => errs}}} -> {:error, errs}
-        err -> {:error, err}
-      end
-    end
-
-    def list_for_hostname(client, zone_id, hostname, type \\ nil) do
-      case type do
-        nil -> list(client, zone_id, name: hostname)
-        _ -> list(client, zone_id, name: hostname, type: "A")
-      end
-    end
-
-    def create(client, zone_id, %DnsRecord{} = record) do
-      Tesla.post(client, "/zones/#{zone_id}/dns_records", DnsRecord.to_cf_json(record))
-    end
-
-    def create(client, zone_id, hostname, ip, type \\ "A") do
-      Tesla.post(client, "/zones/#{zone_id}/dns_records", %{
-        type: type,
-        name: hostname,
-        content: ip,
-        ttl: "1",
-        proxied: false
-      })
-    end
-
-    defp list_url(zone_id, opts) do
-      case opts do
-        nil -> "/zones/#{zone_id}/dns_records"
-        _ -> "/zones/#{zone_id}/dns_records?#{CloudflareApi.uri_encode_opts(opts)}"
-      end
-    end
-
-    defp c(%Tesla.Client{} = client), do: client
-    defp c(client), do: client.()
-
-    defp to_structs(records) when is_list(records), do:
-      Enum.map(records, fn r -> to_struct(r) end)
-
-    defp to_struct(record), do: DnsRecord.from_cf_json(record)
-  end
-
-  defmodule Zones do
-    def list(client, opts \\ nil) do
-      case Tesla.get(c(client), list_url(opts)) do
-        {:ok, %Tesla.Env{status: 200, body: body}} -> {:ok, body["result"]}
-        {:ok, %Tesla.Env{body: %{"errors" => errs}}} -> {:error, errs}
-        err -> {:error, err}
-      end
-    end
-
-    defp list_url(opts) do
-      case opts do
-        nil -> "/zones"
-        _ -> "/zones?#{CloudflareApi.uri_encode_opts(opts)}"
-      end
-    end
-
-    defp c(%Tesla.Client{} = client), do: client
-    defp c(client), do: client.()
-  end
 end
 
 # HTTP
