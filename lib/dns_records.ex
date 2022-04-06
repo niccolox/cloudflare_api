@@ -23,6 +23,15 @@ defmodule CloudflareApi.DnsRecords do
     end
   end
 
+  def list_for_host_domain(client, zone_id, host, domain, type \\ nil) do
+    hostname = "#{host}.#{domain}"
+
+    case type do
+      nil -> list(c(client), zone_id, name: hostname)
+      _ -> list(c(client), zone_id, name: hostname, type: "A")
+    end
+  end
+
   @doc ~S"""
   If the record already exists, this will exit with a success {:ok, :already_created}
   """

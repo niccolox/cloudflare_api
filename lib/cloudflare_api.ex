@@ -79,7 +79,7 @@ defmodule CloudflareApi do
   CloudflareApi.DnsRecords.list(client(), "my_zone_id)
 
   # If you are going to do additional processing, you can use a pipe:
-  client()
+  client(api_token)
   |> CloudflareApi.list("my_zone_id")
   |> Enum.map(fn record -> {record} end)
   ```
