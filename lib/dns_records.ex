@@ -64,6 +64,25 @@ defmodule CloudflareApi.DnsRecords do
     end
   end
 
+  def update(client, zone_id, record_id, hostname, ip, type \\ "A") do
+    case Tesla.put(c(client), "/zones/#{zone_id}/dns_records/#{record_id}", %{
+           type: type,
+           name: hostname,
+           content: ip,
+           ttl: "1",
+           proxied: false
+         }) do
+      {:ok, %Tesla.Env{status: 200, body: body}} ->
+        {:ok, to_struct(body["result"])}
+
+      {:ok, %Tesla.Env{body: %{"errors" => errs}}} ->
+        {:error, errs}
+
+      err ->
+        {:error, err}
+    end
+  end
+
   @doc ~S"""
   If the record already exists, this will exit with a success {:ok, :already_deleted}
   """
@@ -85,7 +104,7 @@ defmodule CloudflareApi.DnsRecords do
 
   def hostname_exists?(client, zone_id, hostname, type \\ nil) do
     with {:ok, records} = list_for_hostname(client, zone_id, hostname) do
-      #Enum.any?(records, fn r -> r.hostname == hostname end)
+      # Enum.any?(records, fn r -> r.hostname == hostname end)
       Enum.count(records) > 0
     end
   end
