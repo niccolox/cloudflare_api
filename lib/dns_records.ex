@@ -112,7 +112,7 @@ defmodule CloudflareApi.DnsRecords do
   end
 
   def hostname_exists?(client, zone_id, hostname, type \\ nil) do
-    with {:ok, records} = list_for_hostname(client, zone_id, hostname) do
+    with {:ok, records} = list_for_hostname(client, zone_id, hostname, type) do
       # Enum.any?(records, fn r -> r.hostname == hostname end)
       Enum.count(records) > 0
     end
