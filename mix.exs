@@ -2,7 +2,7 @@ defmodule CloudflareApi.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/freedomben/cloudflare_api"
-  @version "0.0.2"
+  @version "0.0.3"
 
   def project do
     [
@@ -37,7 +37,6 @@ defmodule CloudflareApi.MixProject do
   defp deps do
     [
       {:ex_doc, "~> 0.28.0"},
-      {:bonny, "~> 0.4"},
       {:tesla, "~> 1.4"},
       {:hackney, "~> 1.17"}
     ]
