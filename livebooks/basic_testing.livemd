@@ -7,7 +7,7 @@
 If you don't already have a CloudFlare token, you can [create one using these instructions](https://developers.cloudflare.com/api/tokens/create).
 
 ```elixir
-c = CloudflareApi.client("<your_cloudflare_token")
+c = CloudflareApi.client("InVL7IfDJyRKFisCIVBW0KhFXgEwjO0LYaTLa9NT")
 ```
 
 <!-- livebook:{"output":true} -->
@@ -23,12 +23,6 @@ We're going to assume here that the first zone in the list is the one we want
 ```elixir
 {:ok, results} = CloudflareApi.Zones.list(c)
 zone_id = List.first(results)["id"]
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-"1576e86130161d3809f2e5248e8d9e08"
 ```
 
 Get the zone ID from above.  example:

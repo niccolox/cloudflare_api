@@ -27,7 +27,7 @@ defmodule CloudflareApi.Utils do
 
       conn
       |> put_status(:not_found)
-      |> put_view(MalanWeb.ErrorView)
+      |> put_view(CloudflareApiWeb.ErrorView)
       |> render(:"404")
       |> pry_pipe()
 
@@ -43,7 +43,7 @@ defmodule CloudflareApi.Utils do
 
   ## Examples
 
-      iex> Malan.Utils.map_string_keys_to_atoms(%{"one" => "one", "two" => "two"})
+      iex> CloudflareApi.Utils.map_string_keys_to_atoms(%{"one" => "one", "two" => "two"})
       %{one: "one", two: "two"}m
 
   """
@@ -58,7 +58,7 @@ defmodule CloudflareApi.Utils do
 
   ## Examples
 
-      iex> Malan.Utils.map_atom_keys_to_strings(%{one: "one", two: "two"})
+      iex> CloudflareApi.Utils.map_atom_keys_to_strings(%{one: "one", two: "two"})
       %{"one" => "one", "two" => "two"}
 
   """
@@ -73,7 +73,7 @@ defmodule CloudflareApi.Utils do
 
   ## Examples
 
-      Malan.Utils.struct_to_map(%Something{hello: "world"})
+      CloudflareApi.Utils.struct_to_map(%Something{hello: "world"})
       %{hello: "world"}
 
   """
@@ -87,7 +87,7 @@ defmodule CloudflareApi.Utils do
 
   ## Examples
 
-      Malan.Utils.uuidgen()
+      CloudflareApi.Utils.uuidgen()
       "4c2fd8d3-a6e3-4e4b-a2ce-3f21456eeb85"
 
   """
@@ -103,11 +103,11 @@ defmodule CloudflareApi.Utils do
 
   ## Examples
 
-      iex> Malan.Utils.is_uuid?(nil)
+      iex> CloudflareApi.Utils.is_uuid?(nil)
       false
-      iex> Malan.Utils.is_uuid?("hello world")
+      iex> CloudflareApi.Utils.is_uuid?("hello world")
       false
-      iex> Malan.Utils.is_uuid?("4c2fd8d3-a6e3-4e4b-a2ce-3f21456eeb85")
+      iex> CloudflareApi.Utils.is_uuid?("4c2fd8d3-a6e3-4e4b-a2ce-3f21456eeb85")
       true
 
   """
@@ -130,11 +130,11 @@ defmodule CloudflareApi.Utils do
 
   ## Examples
 
-      iex> Malan.Utils.nil_or_empty?("hello")
+      iex> CloudflareApi.Utils.nil_or_empty?("hello")
       false
-      iex> Malan.Utils.nil_or_empty?("")
+      iex> CloudflareApi.Utils.nil_or_empty?("")
       true
-      iex> Malan.Utils.nil_or_empty?(nil)
+      iex> CloudflareApi.Utils.nil_or_empty?(nil)
       true
 
   """
@@ -143,45 +143,45 @@ defmodule CloudflareApi.Utils do
   end
 
   @doc """
-  if `value` (value of the argument) is nil, this will raise `Malan.CantBeNil`
+  if `value` (value of the argument) is nil, this will raise `CloudflareApi.CantBeNil`
 
   `argn` (name of the argument) will be passed to allow for more helpful error
   messages that tell you the name of the variable that was `nil`
 
   ## Examples
 
-      iex> Malan.Utils.raise_if_nil!("somevar", "someval")
+      iex> CloudflareApi.Utils.raise_if_nil!("somevar", "someval")
       "someval"
-      iex> Malan.Utils.raise_if_nil!("somevar", nil)
-      ** (Malan.CantBeNil) variable 'somevar' was nil but cannot be
-          (malan 0.1.0) lib/malan/utils.ex:135: Malan.Utils.raise_if_nil!/2
+      iex> CloudflareApi.Utils.raise_if_nil!("somevar", nil)
+      ** (CloudflareApi.CantBeNil) variable 'somevar' was nil but cannot be
+          (malan 0.1.0) lib/malan/utils.ex:135: CloudflareApi.Utils.raise_if_nil!/2
 
   """
   def raise_if_nil!(varname, value) do
     case is_nil(value) do
-      true -> raise Malan.CantBeNil, varname: varname
+      true -> raise CloudflareApi.CantBeNil, varname: varname
       false -> value
     end
   end
 
   @doc """
-  if `value` (value of the argument) is nil, this will raise `Malan.CantBeNil`
+  if `value` (value of the argument) is nil, this will raise `CloudflareApi.CantBeNil`
 
   `argn` (name of the argument) will be passed to allow for more helpful error
   messages that tell you the name of the variable that was `nil`
 
   ## Examples
 
-      iex> Malan.Utils.raise_if_nil!("someval")
+      iex> CloudflareApi.Utils.raise_if_nil!("someval")
       "someval"
-      iex> Malan.Utils.raise_if_nil!(nil)
-      ** (Malan.CantBeNil) variable 'somevar' was nil but cannot be
-          (malan 0.1.0) lib/malan/utils.ex:142: Malan.Utils.raise_if_nil!/1
+      iex> CloudflareApi.Utils.raise_if_nil!(nil)
+      ** (CloudflareApi.CantBeNil) variable 'somevar' was nil but cannot be
+          (malan 0.1.0) lib/malan/utils.ex:142: CloudflareApi.Utils.raise_if_nil!/1
 
   """
   def raise_if_nil!(value) do
     case is_nil(value) do
-      true -> raise Malan.CantBeNil
+      true -> raise CloudflareApi.CantBeNil
       false -> value
     end
   end
@@ -248,19 +248,19 @@ defmodule CloudflareApi.Utils do
   end
 end
 
-defmodule Malan.Utils.Enum do
+defmodule CloudflareApi.Utils.Enum do
   @doc """
   will return true if all invocations of the function return false.  If one callback returns `true`, the end result will be `false`
 
   `Enum.all?` will return true if all invocations of the function return
-  true. `Malan.Utils.Enum.none?` is the opposite.
+  true. `CloudflareApi.Utils.Enum.none?` is the opposite.
   """
   def none?(enum, func) do
     Enum.all?(enum, fn i -> !func.(i) end)
   end
 end
 
-defmodule Malan.Utils.Crypto do
+defmodule CloudflareApi.Utils.Crypto do
   def strong_random_string(length) do
     :crypto.strong_rand_bytes(length)
     |> Base.encode64(padding: false)
@@ -287,7 +287,7 @@ defmodule Malan.Utils.Crypto do
   end
 end
 
-defmodule Malan.Utils.DateTime do
+defmodule CloudflareApi.Utils.DateTime do
   def utc_now_trunc(),
     do: DateTime.truncate(DateTime.utc_now(), :second)
 
