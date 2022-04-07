@@ -24,12 +24,12 @@ defmodule CloudflareApi.DnsRecords do
   end
 
   def list_for_host_domain(client, zone_id, host, domain, type \\ nil) do
-    hostname = "#{host}.#{domain}"
-
-    case type do
-      nil -> list(c(client), zone_id, name: hostname)
-      _ -> list(c(client), zone_id, name: hostname, type: "A")
+    hostname = cond do
+      String.ends_with?(host, domain) -> host
+      true -> "#{host}.#{domain}"
     end
+
+    list_for_hostname(client, zone_id, hostname, type)
   end
 
   @doc ~S"""
@@ -113,7 +113,12 @@ defmodule CloudflareApi.DnsRecords do
 
   def hostname_exists?(client, zone_id, hostname, type \\ nil) do
     with {:ok, records} = list_for_hostname(client, zone_id, hostname, type) do
-      # Enum.any?(records, fn r -> r.hostname == hostname end)
+      Enum.count(records) > 0
+    end
+  end
+
+  def host_domain_exists?(client, zone_id, host, domain, type \\ nil) do
+    with {:ok, records} = list_for_host_domain(client, zone_id, host, domain, type) do
       Enum.count(records) > 0
     end
   end
