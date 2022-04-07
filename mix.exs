@@ -2,7 +2,7 @@ defmodule CloudflareApi.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/freedomben/cloudflare_api"
-  @version "0.0.3"
+  @version "0.0.4"
 
   def project do
     [
