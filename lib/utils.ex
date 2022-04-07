@@ -269,18 +269,6 @@ defmodule CloudflareApi.Utils.Crypto do
     |> binary_part(0, length)
   end
 
-  def hash_password(password) do
-    Pbkdf2.hash_pwd_salt(password)
-  end
-
-  def verify_password(given_pass, password_hash) do
-    Pbkdf2.verify_pass(given_pass, password_hash)
-  end
-
-  def fake_verify_password() do
-    Pbkdf2.no_user_verify()
-  end
-
   def hash_token(api_token) do
     :crypto.hash(:sha256, api_token)
     |> Base.encode64()
