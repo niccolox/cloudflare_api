@@ -41,7 +41,8 @@ defmodule CloudflareApi.MixProject do
       {:hackney, "~> 1.17"},
       {:jason, "~> 1.3.0"},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
+      {:number, "~> 1.0.3"}
     ]
   end
 

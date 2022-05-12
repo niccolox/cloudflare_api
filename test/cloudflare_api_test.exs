@@ -7,7 +7,7 @@ defmodule CloudflareApiTest do
   @test_token "<populate me!>"
 
   test "It all works" do
-    # Because this test requires real cloudlfare, we jam it all into one subroutine
+    # Because this test requires real cloudflare, we jam it all into one subroutine
     c = CloudflareApi.client(@test_token)
     DnsRecords.list(c, "abc")
     assert c
