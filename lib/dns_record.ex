@@ -15,12 +15,46 @@ defmodule CloudflareApi.DnsRecord do
     :hostname,
     :ip,
     :created_on,
-    type: "A",
+    type: :A,
     ttl: "1",
     proxied: false,
     proxiable: true,
     locked: false
   ]
+
+  @type ttl ::
+          :A
+          | :AAAA
+          | :CNAME
+          | :HTTPS
+          | :TXT
+          | :SRV
+          | :LOC
+          | :MX
+          | :NS
+          | :CERT
+          | :DNSKEY
+          | :DS
+          | :NAPTR
+          | :SMIMEA
+          | :SSHFP
+          | :SVCB
+          | :TLSA
+          | :URI
+
+  @type t :: %__MODULE__{
+          :id => String.t() | nil,
+          :zone_id => String.t(),
+          :hostname => String.t(),
+          :ip => String.t(),
+          :zone_name => String.t() | nil,
+          :created_on => String.t() | nil,
+          :type => ttl,
+          :ttl => non_neg_integer(),
+          :proxied => boolean() | nil,
+          :proxiable => boolean() | nil,
+          :locked => boolean() | nil
+        }
 
   def cf_url(record) do
     "https://api.cloudflare.com/client/v4/zones/#{record.zone_id}/dns_records"
