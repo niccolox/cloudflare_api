@@ -443,6 +443,7 @@ defmodule CloudflareApi.Utils do
   @spec to_string(input :: map() | list() | String.Chars.t(), mask_keys :: list(binary())) ::
           binary()
   def to_string(value, mask_keys \\ [])
+  def to_string(%{__struct__: _} = s, mask_keys), do: map_to_string(Map.from_struct(s), mask_keys)
   def to_string(%{} = map, mask_keys), do: map_to_string(map, mask_keys)
   def to_string(list, mask_keys) when is_list(list), do: list_to_string(list, mask_keys)
   def to_string(tuple, mask_keys) when is_tuple(tuple), do: tuple_to_string(tuple, mask_keys)

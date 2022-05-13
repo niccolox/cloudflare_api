@@ -10,6 +10,7 @@ defmodule CloudflareApi.Application do
     children = [
       # Starts a worker by calling: CloudflareApi.Worker.start_link(arg)
       # {CloudflareApi.Worker, arg}
+      {CloudflareApi.Cache, []}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
