@@ -32,7 +32,7 @@ defmodule CloudflareApi.Utils do
     74
   """
   @spec extract(
-          Access.t() | List.t() | Tuple.t() | any(),
+          Access.t() | list() | tuple() | any(),
           integer() | String.t() | (... -> any())
         ) :: any()
   def extract(list, key) when is_list(list) and is_integer(key) do
@@ -47,18 +47,26 @@ defmodule CloudflareApi.Utils do
     access[key]
   end
 
+  def extract(struct, key) when is_struct(struct) and is_atom(key) do
+    Map.from_struct(struct)[key]
+  end
+
+  def extract(struct, key) when is_struct(struct) and is_binary(key) do
+    extract(struct, String.to_atom(key))
+  end
+
   def extract(anything, extract_func) do
     extract_func.(anything)
   end
 
   @spec process(
-          Access.t() | List.t() | Tuple.t() | any(),
+          Access.t() | list() | tuple() | any(),
           integer() | String.t() | (... -> any())
         ) :: any()
   def process(thing, arg), do: extract(thing, arg)
 
   @spec transform(
-          Access.t() | List.t() | Tuple.t() | any(),
+          Access.t() | list() | tuple() | any(),
           integer() | String.t() | (... -> any())
         ) :: any()
   def transform(thing, arg), do: extract(thing, arg)

@@ -17,6 +17,8 @@ defmodule CloudflareApi.Cache do
   alias CloudflareApi.Utils
   alias CloudflareApi.Utils.Logger
 
+  alias CloudflareApi.{Cache, CacheEntry}
+
   @self :cloudflare_api_cache
 
   @enforce_keys [:expire_seconds, :hostnames]
@@ -24,7 +26,7 @@ defmodule CloudflareApi.Cache do
 
   @type t :: %__MODULE__{
           expire_seconds: non_neg_integer(),
-          hostnames: %{String.t() => Cloudflare.DnsRecord.t()}
+          hostnames: %{String.t() => CloudflareApi.CacheEntry.t()}
         }
 
   def start_link(args) when is_list(args) do
@@ -33,80 +35,191 @@ defmodule CloudflareApi.Cache do
   end
 
   def get(hostname) do
-    ret = GenServer.call(@self, {:get, hostname})
-    require IEx; IEx.pry
+    get_entry(hostname).dns_record
+  end
+
+  def get_entry(hostname) do
+    GenServer.call(@self, {:get, hostname})
+  end
+
+  def add_or_update(%DnsRecord{} = record) do
+    # GenServer.call(@self, {:update, record})
+    GenServer.call(@self, {:update, record}, 5_000_000)
   end
 
   def add_or_update(hostname, %DnsRecord{} = record) do
-    GenServer.call(@self, {:update, hostname, record})
-    :ok
+    # GenServer.call(@self, {:update, hostname, record})
+    GenServer.call(@self, {:update, hostname, record}, 5_000_000)
   end
 
+  def update(%DnsRecord{} = record), do: add_or_update(record)
   def update(hostname, %DnsRecord{} = record), do: add_or_update(hostname, record)
 
   def includes?(hostname) do
-    GenServer.call(@self, {:includes, hostname})
+    # GenServer.call(@self, {:includes, hostname})
+    GenServer.call(@self, {:includes, hostname}, 5_000_000)
   end
 
   def delete(hostname) do
-    GenServer.call(@self, {:delete, hostname})
+    # GenServer.call(@self, {:delete, hostname})
+    GenServer.call(@self, {:delete, hostname}, 5_000_000)
   end
 
   def flush do
-    GenServer.call(@self, {:flush})
+    # GenServer.call(@self, {:flush})
+    GenServer.call(@self, {:flush}, 5_000_000)
   end
 
   def dump do
-    GenServer.call(@self, {:dump})
+    dump_cache()
+    |> extract_hostnames()
+  end
+
+  def dump_cache do
+    # GenServer.call(@self, {:dump})
+    GenServer.call(@self, {:dump}, 5_000_000)
   end
 
   # Server
 
   @impl true
   def init(_init_arg) do
-    #{:ok, %__MODULE__{expire_seconds: Application.get_env(:expire_seconds), hostnames: %{}}}
+    # {:ok, %__MODULE__{expire_seconds: Application.get_env(:expire_seconds), hostnames: %{}}}
     {:ok, %__MODULE__{expire_seconds: 120, hostnames: %{}}}
   end
 
   @impl true
-  def handle_call({:get, hostname}, _from, state) do
-    Logger.debug(__ENV__, "Handling call for :get hostname='#{hostname}', state='#{Utils.to_string(state)}'")
-    #{:reply, reply, new_state}
+  def handle_call({:get, hostname}, _from, cache) do
+    Logger.debug(
+      __ENV__,
+      "Handling call for :get hostname='#{hostname}', cache='#{Utils.to_string(cache)}'"
+    )
+
+    retval =
+      cond do
+        Map.has_key?(cache.hostnames, hostname) -> cache.hostnames[hostname]
+        true -> nil
+      end
+
+    {:reply, retval, cache}
+  end
+
+  @impl true
+  def handle_call({:update, %DnsRecord{} = dns_record}, _from, cache) do
+    Logger.debug(
+      __ENV__,
+      "Handling call for :update dns_record='#{Utils.to_string(dns_record)}', cache='#{Utils.to_string(cache)}"
+    )
+
+    {:reply, dns_record, add_entry(cache, to_entry(dns_record))}
+  end
+
+  @impl true
+  def handle_call({:update, hostname, %DnsRecord{} = dns_record}, _from, cache) do
+    Logger.debug(
+      __ENV__,
+      "Handling call for :update hostname='#{hostname}', dns_record='#{Utils.to_string(dns_record)}', cache='#{Utils.to_string(cache)}"
+    )
+
+    # dn = to_entry(dns_record)
+    # en = add_entry(cache, dn)
+    # gn = add_entry(en, dn)
+    # hn = add_entry(gn, dn)
+    # require IEx; IEx.pry
+    {:reply, dns_record, add_entry(cache, hostname, to_entry(dns_record))}
+  end
+
+  @impl true
+  def handle_call({:includes, hostname}, _from, cache) do
+    Logger.debug(
+      __ENV__,
+      "Handling call for :includes hostname='#{hostname}', cache='#{Utils.to_string(cache)}'"
+    )
+
+    # {:reply, Map.has_key?(cache, hostname), cache}
+    {:reply, Map.has_key?(cache.hostnames, hostname), cache}
+  end
+
+  @impl true
+  def handle_call({:delete, hostname}, _from, cache) do
+    Logger.debug(
+      __ENV__,
+      "Handling call for :delete hostname='#{hostname}', cache='#{Utils.to_string(cache)}'"
+    )
+
+    # TODO
     {:reply, %DnsRecord{zone_id: "", hostname: "", ip: ""}, %{}}
   end
 
   @impl true
-  def handle_call({:update, hostname, %DnsRecord{} = dns_record}, _from, state) do
-    Logger.debug(__ENV__, "Handling call for :update hostname='#{hostname}', dns_record='#{Utils.to_string(dns_record)}', state='#{Utils.to_string(state)}")
+  def handle_call({:flush}, _from, cache) do
+    Logger.debug(__ENV__, "Handling call for :flush cache='#{Utils.to_string(cache)}'")
 
-    {:reply, %DnsRecord{zone_id: "", hostname: hostname, ip: ""}, %{}}
+    # TODO
+    {:reply, :ok, %__MODULE__{expire_seconds: 120, hostnames: %{}}}
   end
 
   @impl true
-  def handle_call({:includes, hostname}, _from, state) do
-    Logger.debug(__ENV__, "Handling call for :includes hostname='#{hostname}', state='#{Utils.to_string(state)}'")
+  def handle_call({:dump}, _from, cache) do
+    Logger.debug(__ENV__, "Handling call for :dump cache='#{Utils.to_string(cache)}'")
 
-    {:reply, Map.has_key?(state, hostname), state}
+    {:reply, cache, cache}
   end
 
-  @impl true
-  def handle_call({:delete, hostname}, _from, state) do
-    Logger.debug(__ENV__, "Handling call for :delete hostname='#{hostname}', state='#{Utils.to_string(state)}'")
-
-    {:reply, %DnsRecord{zone_id: "", hostname: "", ip: ""}, %{}}
+  defp cur_seconds() do
+    System.monotonic_time(:second)
   end
 
-  @impl true
-  def handle_call({:flush}, _from, state) do
-    Logger.debug(__ENV__, "Handling call for :flush state='#{Utils.to_string(state)}'")
-
-    {:reply, %DnsRecord{zone_id: "", hostname: "", ip: ""}, %{}}
+  defp to_entry(%DnsRecord{} = dns_record) do
+    %CacheEntry{timestamp: cur_seconds(), dns_record: dns_record}
   end
 
-  @impl true
-  def handle_call({:dump}, _from, state) do
-    Logger.debug(__ENV__, "Handling call for :dump state='#{Utils.to_string(state)}'")
+  @spec add_entry(cache :: Cache.t(), cache_entry :: CacheEntry.t()) :: Cache.t()
+  defp add_entry(%Cache{} = cache, %CacheEntry{} = cache_entry) do
+    cache
+    |> Kernel.struct(
+      hostnames: Map.put(cache.hostnames, cache_entry.dns_record.hostname, cache_entry)
+    )
+  end
 
-    {:reply, %DnsRecord{zone_id: "", hostname: "", ip: ""}, %{}}
+  @spec add_entry(cache :: Cache.t(), hostname :: String.t(), cache_entry :: CacheEntry.t()) ::
+          Cache.t()
+  defp add_entry(%Cache{} = cache, hostname, %CacheEntry{} = cache_entry) do
+    cache
+    |> Kernel.struct(hostnames: Map.put(cache.hostnames, hostname, cache_entry))
+  end
+
+  defp get_entry(%Cache{hostnames: _hostnames} = cache, hostname, nil_if_expired?) do
+    cache_entry = get_entry(cache, hostname)
+
+    cond do
+      is_nil(cache_entry) -> nil
+      nil_if_expired? && expired?(cache_entry, cache.expire_seconds) -> nil
+      true -> cache_entry
+    end
+  end
+
+  defp get_entry(%Cache{hostnames: hostnames}, hostname) do
+    cond do
+      Map.has_key?(hostnames, hostname) -> hostnames[hostname]
+      true -> nil
+    end
+  end
+
+  defp expired?(%Cache{} = cache, hostname) do
+    case get_entry(cache, hostname) do
+      nil -> true
+      cache_entry -> expired?(cache_entry, cache.expire_seconds)
+    end
+  end
+
+  defp expired?(%CacheEntry{} = entry, expire_seconds) do
+    entry.timestamp + expire_seconds < cur_seconds()
+  end
+
+  defp extract_hostnames(cache) do
+    cache.hostnames
+    |> Map.values()
+    |> Enum.map(fn v -> v.dns_record end)
   end
 end
