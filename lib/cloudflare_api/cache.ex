@@ -270,4 +270,19 @@ defmodule CloudflareApi.Cache do
         |> Enum.into(%{})
     )
   end
+
+  @spec expire_entry(cache :: Cache.t(), hostname :: String.t()) :: Cache.t()
+  defp expire_entry(%Cache{} = cache, hostname) do
+    # TODO - WIP
+    cache
+    #|> Kernel.struct(
+    #  hostnames: Map.put(cache.hostnames, cache_entry.dns_record.hostname, cache_entry)
+    #)
+    #cache.hostnames[hostname]
+    #entry = cache.hostnames[hostname]
+    #entry = struct(entry, timestamp: cur_seconds() - 10)
+    #cache.hostnames[hostname] = entry
+    #Map.update!(cache.hostnames[hostname], entry)
+    #Map.update!(cache, cache_entry.dns_record.hostname, fun)
+  end
 end
