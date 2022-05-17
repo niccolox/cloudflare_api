@@ -121,11 +121,6 @@ defmodule CloudflareApi.Cache do
       "Handling call for :update hostname='#{hostname}', dns_record='#{Utils.to_string(dns_record)}', cache='#{Utils.to_string(cache)}"
     )
 
-    # dn = to_entry(dns_record)
-    # en = add_entry(cache, dn)
-    # gn = add_entry(en, dn)
-    # hn = add_entry(gn, dn)
-    # require IEx; IEx.pry
     {:reply, dns_record, add_entry(cache, hostname, to_entry(dns_record))}
   end
 
@@ -136,7 +131,6 @@ defmodule CloudflareApi.Cache do
       "Handling call for :includes hostname='#{hostname}', cache='#{Utils.to_string(cache)}'"
     )
 
-    # {:reply, Map.has_key?(cache, hostname), cache}
     {:reply, Map.has_key?(cache.hostnames, hostname), cache}
   end
 
@@ -147,15 +141,13 @@ defmodule CloudflareApi.Cache do
       "Handling call for :delete hostname='#{hostname}', cache='#{Utils.to_string(cache)}'"
     )
 
-    # TODO
-    {:reply, %DnsRecord{zone_id: "", hostname: "", ip: ""}, %{}}
+    {:reply, :ok, remove_entry(cache, hostname)}
   end
 
   @impl true
   def handle_call({:flush}, _from, cache) do
     Logger.debug(__ENV__, "Handling call for :flush cache='#{Utils.to_string(cache)}'")
 
-    # TODO
     {:reply, :ok, %__MODULE__{expire_seconds: 120, hostnames: %{}}}
   end
 
@@ -221,5 +213,20 @@ defmodule CloudflareApi.Cache do
     cache.hostnames
     |> Map.values()
     |> Enum.map(fn v -> v.dns_record end)
+  end
+
+  @spec remove_entry(cache :: Cache.t(), cache_entry :: CacheEntry.t()) :: Cache.t()
+  defp remove_entry(%Cache{} = cache, %CacheEntry{} = cache_entry) do
+    remove_entry(cache, cache_entry.dns_record.hostname)
+  end
+
+  @spec remove_entry(cache :: Cache.t(), hostname :: String.t()) :: Cache.t()
+  defp remove_entry(%Cache{} = cache, hostname) do
+    cache
+    |> Kernel.struct(
+      hostnames:
+        Enum.reject(cache.hostnames, fn {hn, _dnsr} -> hn == hostname end)
+        |> Enum.into(%{})
+    )
   end
 end

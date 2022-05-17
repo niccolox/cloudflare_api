@@ -20,9 +20,7 @@ defmodule CloudflareApi.CacheTest do
       drf2 = dns_record_fixture(hn2)
 
       assert false == Cache.includes?(hn1)
-      # assert :ok == Cache.add_or_update(hn1, dns_record_fixture())
       assert drf1 == Cache.add_or_update(drf1)
-      # Cache.add_or_update(hn1, dns_record_fixture(hn1))
 
       assert true == Cache.includes?(hn1)
       assert drf1 == Cache.get(hn1)
@@ -31,33 +29,31 @@ defmodule CloudflareApi.CacheTest do
 
       assert drf1 == Cache.add_or_update(hn1, drf1)
       assert drf2 == Cache.add_or_update(hn2, drf2)
-      assert dump_res = Cache.dump()
-      assert true == Map.has_key?(dump_res, hn1)
-      assert true == Map.has_key?(dump_res, hn2)
-      assert drf1 == Map.get(dump_res, hn1)
-      assert drf2 == Map.get(dump_res, hn2)
 
+      assert dump_res = Cache.dump_cache()
+      assert true == Map.has_key?(dump_res.hostnames, hn1)
+      assert true == Map.has_key?(dump_res.hostnames, hn2)
+      assert drf1 == Map.get(dump_res.hostnames, hn1).dns_record
+      assert drf2 == Map.get(dump_res.hostnames, hn2).dns_record
       assert dump_res = Cache.dump()
-      assert true == Map.has_key?(dump_res, hn1)
-      assert true == Map.has_key?(dump_res, hn2)
-      assert drf1 == Map.get(dump_res, hn1)
-      assert drf2 == Map.get(dump_res, hn2)
-      assert true == Cache.includes?(hn1)
-      assert true == Cache.includes?(hn2)
+      hns1 = Enum.map(dump_res, fn dr -> dr.hostname end)
+      assert true == hn1 in hns1
+      assert true == hn2 in hns1
 
       assert :ok == Cache.delete(hn2)
       assert true == Cache.includes?(hn1)
       assert false == Cache.includes?(hn2)
-      assert dump_res = Cache.dump()
-      assert true == Map.has_key?(dump_res, hn1)
-      assert false == Map.has_key?(dump_res, hn2)
-      assert drf1 == Map.get(dump_res, hn1)
-      assert drf2 == Map.get(dump_res, hn2)
+      assert dump_res = Cache.dump_cache()
+      assert true == Map.has_key?(dump_res.hostnames, hn1)
+      assert false == Map.has_key?(dump_res.hostnames, hn2)
+      assert drf1 == Map.get(dump_res.hostnames, hn1).dns_record
+      assert nil == Map.get(dump_res.hostnames, hn2)
       assert true == Cache.includes?(hn1)
       assert false == Cache.includes?(hn2)
 
       assert :ok == Cache.flush()
-      assert %{} == Cache.dump()
+      assert [] == Cache.dump()
+      assert %{} == Cache.dump_cache().hostnames
       assert false == Cache.includes?(hn1)
       assert false == Cache.includes?(hn2)
     end
