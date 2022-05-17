@@ -38,18 +38,26 @@ defmodule CloudflareApi.Cache do
     get_entry(hostname).dns_record
   end
 
+  def get(hostname, :even_if_expired) do
+    get_entry(hostname, :even_if_expired).dns_record
+  end
+
   def get_entry(hostname) do
     GenServer.call(@self, {:get, hostname})
   end
 
+  def get_entry(hostname, :even_if_expired) do
+    GenServer.call(@self, {:get, hostname, :even_if_expired})
+  end
+
   def add_or_update(%DnsRecord{} = record) do
     # GenServer.call(@self, {:update, record})
-    GenServer.call(@self, {:update, record}, 5_000_000)
+    GenServer.call(@self, {:update, record}, 15_000)
   end
 
   def add_or_update(hostname, %DnsRecord{} = record) do
     # GenServer.call(@self, {:update, hostname, record})
-    GenServer.call(@self, {:update, hostname, record}, 5_000_000)
+    GenServer.call(@self, {:update, hostname, record}, 15_000)
   end
 
   def update(%DnsRecord{} = record), do: add_or_update(record)
@@ -57,17 +65,22 @@ defmodule CloudflareApi.Cache do
 
   def includes?(hostname) do
     # GenServer.call(@self, {:includes, hostname})
-    GenServer.call(@self, {:includes, hostname}, 5_000_000)
+    GenServer.call(@self, {:includes, hostname}, 15_000)
+  end
+
+  def includes?(hostname, :even_if_expired) do
+    # TODO
+    get_entry(hostname).dns_record
   end
 
   def delete(hostname) do
     # GenServer.call(@self, {:delete, hostname})
-    GenServer.call(@self, {:delete, hostname}, 5_000_000)
+    GenServer.call(@self, {:delete, hostname}, 15_000)
   end
 
   def flush do
     # GenServer.call(@self, {:flush})
-    GenServer.call(@self, {:flush}, 5_000_000)
+    GenServer.call(@self, {:flush}, 15_000)
   end
 
   def dump do
@@ -77,7 +90,12 @@ defmodule CloudflareApi.Cache do
 
   def dump_cache do
     # GenServer.call(@self, {:dump})
-    GenServer.call(@self, {:dump}, 5_000_000)
+    GenServer.call(@self, {:dump}, 15_000)
+  end
+
+  def expire(hostname) do
+    # GenServer.call(@self, {:expire, hostname})
+    GenServer.call(@self, {:expire, hostname}, 15_000)
   end
 
   # Server
@@ -95,13 +113,17 @@ defmodule CloudflareApi.Cache do
       "Handling call for :get hostname='#{hostname}', cache='#{Utils.to_string(cache)}'"
     )
 
-    retval =
-      cond do
-        Map.has_key?(cache.hostnames, hostname) -> cache.hostnames[hostname]
-        true -> nil
-      end
+    {:reply, get_entry_from_cache(cache, hostname), cache}
+  end
 
-    {:reply, retval, cache}
+  @impl true
+  def handle_call({:get, hostname, :even_if_expired}, _from, cache) do
+    Logger.debug(
+      __ENV__,
+      "Handling call for :get even_if_expired hostname='#{hostname}', cache='#{Utils.to_string(cache)}'"
+    )
+
+    {:reply, get_entry_from_cache(cache, hostname, :even_if_expired), cache}
   end
 
   @impl true
@@ -126,6 +148,19 @@ defmodule CloudflareApi.Cache do
 
   @impl true
   def handle_call({:includes, hostname}, _from, cache) do
+    Logger.debug(
+      __ENV__,
+      "Handling call for :includes hostname='#{hostname}', cache='#{Utils.to_string(cache)}'"
+    )
+
+    case get_entry_from_cache(cache, hostname) do
+      nil -> {:reply, false, cache}
+      _ce -> {:reply, true, cache}
+    end
+  end
+
+  @impl true
+  def handle_call({:includes, hostname, :even_if_expired}, _from, cache) do
     Logger.debug(
       __ENV__,
       "Handling call for :includes hostname='#{hostname}', cache='#{Utils.to_string(cache)}'"
@@ -158,6 +193,12 @@ defmodule CloudflareApi.Cache do
     {:reply, cache, cache}
   end
 
+  def handle_call({:expire, hostname}, _from, cache) do
+    Logger.debug(__ENV__, "Handling call for :expire hostname='#{hostname}', cache='#{Utils.to_string(cache)}'")
+
+    {:reply, :ok, expire_entry(cache, hostname)}
+  end
+
   defp cur_seconds() do
     System.monotonic_time(:second)
   end
@@ -181,17 +222,17 @@ defmodule CloudflareApi.Cache do
     |> Kernel.struct(hostnames: Map.put(cache.hostnames, hostname, cache_entry))
   end
 
-  defp get_entry(%Cache{hostnames: _hostnames} = cache, hostname, nil_if_expired?) do
-    cache_entry = get_entry(cache, hostname)
+  defp get_entry_from_cache(%Cache{hostnames: _hostnames} = cache, hostname) do
+    cache_entry = get_entry_from_cache(cache, hostname, :even_if_expired)
 
     cond do
       is_nil(cache_entry) -> nil
-      nil_if_expired? && expired?(cache_entry, cache.expire_seconds) -> nil
+      expired?(cache_entry, cache.expire_seconds) -> nil
       true -> cache_entry
     end
   end
 
-  defp get_entry(%Cache{hostnames: hostnames}, hostname) do
+  defp get_entry_from_cache(%Cache{hostnames: hostnames} = _cache, hostname, :even_if_expired) do
     cond do
       Map.has_key?(hostnames, hostname) -> hostnames[hostname]
       true -> nil
@@ -199,7 +240,7 @@ defmodule CloudflareApi.Cache do
   end
 
   defp expired?(%Cache{} = cache, hostname) do
-    case get_entry(cache, hostname) do
+    case get_entry_from_cache(cache, hostname) do
       nil -> true
       cache_entry -> expired?(cache_entry, cache.expire_seconds)
     end

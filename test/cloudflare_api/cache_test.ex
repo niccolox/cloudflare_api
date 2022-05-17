@@ -6,12 +6,28 @@ defmodule CloudflareApi.CacheTest do
 
   @test_hostname "test.example.com"
 
-  describe "get" do
-    test "works" do
+  setup do
+    IO.puts "Hello!"
+    Cache.flush()
+
+    on_exit fn ->
+      IO.puts "Goodbye!"
+      Cache.flush()
     end
   end
 
-  describe "update" do
+  describe "cache" do
+    # start_supervised({CloudflareApi.Cache, []})
+    #setup [:cache_dns_record]
+
+    #setup do
+    #  cache_dns_record()
+    #end
+
+    test "expired is hidden" do
+      lljkkjl
+    end
+
     test "includes, update, get, flush, dump, delete all work" do
       hn1 = "hostname1.example.com"
       hn2 = "hostname2.example.com"
@@ -71,6 +87,6 @@ defmodule CloudflareApi.CacheTest do
   end
 
   defp cache_dns_record(dns_record \\ dns_record_fixture()) do
-    Cache.add_or_update(dns_record)
+    {:ok, dns_record: Cache.add_or_update(dns_record)}
   end
 end
