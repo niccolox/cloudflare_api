@@ -40,7 +40,7 @@ defmodule CloudflareApi.MixProject do
       {:ex_doc, "~> 0.28.0"},
       {:tesla, "~> 1.4"},
       {:hackney, "~> 1.17"},
-      {:jason, "~> 1.3.0"},
+      {:jason, "~> 1.4.0"},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:number, "~> 1.0.3"}
